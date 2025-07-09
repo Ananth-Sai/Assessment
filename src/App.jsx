@@ -25,6 +25,7 @@ function App() {
       const reply = await fetchAIResponse(prompt, API_KEY);
       setResponse(reply);
       setHistory((prev) => [...prev, { prompt, response: reply }]);
+      setPrompt("");
     } catch (err) {
       setError(err.message || "Something went wrong");
     }
