@@ -1,35 +1,74 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from "react";
+import InputBox from "./components/InputBox";
+import ReplyBox from "./components/ReplyBox";
+import { fetchAIResponse } from "./services/OpenAiService";
+import ChatHistory from "./components/ChatHistory";
+
+const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [prompt, setPrompt] = useState("");
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [history, setHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const handleAsk = async () => {
+    if (!prompt.trim()) return;
+
+    setLoading(true);
+    setError("");
+    setResponse("");
+
+    try {
+      const reply = await fetchAIResponse(prompt, API_KEY);
+      setResponse(reply);
+      setHistory((prev) => [...prev, { prompt, response: reply }]);
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    }
+
+    setLoading(false);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 px-6 py-6 max-w-sm mx-auto">
+        <div className="flex flex-col items-center text-center mb-6 break-words w-full">
+          <div className="w-8 h-8 mb-2 flex items-center justify-center bg-blue-100 rounded-full">
+            <span className="text-lg">💡</span>
+          </div>
+
+          <h1 className="text-2xl font-semibold text-gray-800 mb-2">Ask AI</h1>
+        </div>
+        <InputBox
+          prompt={prompt}
+          setPrompt={setPrompt}
+          onSubmit={handleAsk}
+          loading={loading}
+        />
+        {error && (
+          <p className="text-red-500 text-sm text-center mb-4 break-words w-full">
+            {error}
+          </p>
+        )}
+        <ReplyBox response={response} />
+        <div className="text-center mt-6">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm px-3 py-2 rounded-md"
+          >
+            {showHistory ? "Hide Chat History" : "Show Chat History"}
+          </button>
+
+          {showHistory && (
+            <ChatHistory history={history} onClear={() => setHistory([])} />
+          )}
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;
